@@ -37,7 +37,6 @@ new Vue({
             // Invoice builder
             invMode: 'dynamic',
             inv: { customer: '', customerPhone: '', customerAddress: '', date: today, notes: '', items: [] },
-            invTemplate: 1,
             // Paper sizes
             paperSizes: [
                 { id: 'a4', label: 'A4', w: 210, h: 297 },
@@ -519,7 +518,7 @@ ${invoiceHTML}
         loadAll() {
             // Theme
             const t = localStorage.getItem('ix_theme');
-            this.theme = t || 'dark';
+            this.theme = t || 'light';
             // Company
             const c = localStorage.getItem('ix_company');
             if (c) this.company = JSON.parse(c);

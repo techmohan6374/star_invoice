@@ -15,7 +15,7 @@
 
 <body>
 
-    <div id="app">
+    <div id="app" v-cloak>
 
         <!-- LOADING OVERLAY -->
         <transition name="fade">
@@ -297,7 +297,9 @@
                                     stock</div>
                                 <div class="empty-sub" v-else>Try a different search term</div>
                             </div>
-                            <div class="table-wrap" v-else>
+
+                            <!-- Desktop Table -->
+                            <div class="table-wrap hide-mobile" v-else>
                                 <table>
                                     <thead>
                                         <tr>
@@ -353,6 +355,41 @@
                                         </tr>
                                     </tbody>
                                 </table>
+                            </div>
+
+                            <!-- Mobile Cards -->
+                            <div class="inv-mobile-list show-mobile" v-if="filteredInventory.length>0">
+                                <div class="inv-mobile-card" v-for="p in filteredInventory" :key="'m'+p.id">
+                                    <div class="inv-mobile-card-top">
+                                        <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;">
+                                            <img v-if="p.image" :src="p.image"
+                                                style="width:40px;height:40px;object-fit:cover;border-radius:8px;border:1px solid var(--border);flex-shrink:0;" />
+                                            <div v-else
+                                                style="width:40px;height:40px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">
+                                                📦</div>
+                                            <div style="min-width:0;">
+                                                <div style="font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{p.name}}</div>
+                                                <div style="font-size:11px;color:var(--text2);">{{p.unit}} <span v-if="p.category">· {{p.category}}</span> <span v-if="p.sku" style="font-family:var(--mono);">· {{p.sku}}</span></div>
+                                            </div>
+                                        </div>
+                                        <span class="badge" :class="stockBadge(p)">{{stockLabel(p)}}</span>
+                                    </div>
+                                    <div class="inv-mobile-card-meta">
+                                        <div class="inv-mobile-meta-item">
+                                            <span class="inv-mobile-meta-label">Rate</span>
+                                            <span style="font-family:var(--mono);font-weight:700;">{{company.currency}}{{Number(p.rate).toFixed(2)}}</span>
+                                        </div>
+                                        <div class="inv-mobile-meta-item">
+                                            <span class="inv-mobile-meta-label">Stock</span>
+                                            <span style="font-family:var(--mono);font-weight:700;">{{p.qty}}</span>
+                                        </div>
+                                        <div class="inv-mobile-card-actions">
+                                            <button class="btn btn-secondary btn-xs" @click="editProduct(p)">✏️ Edit</button>
+                                            <button class="btn btn-secondary btn-xs" @click="adjustStock(p)">± Stock</button>
+                                            <button class="btn btn-danger btn-xs" @click="deleteProduct(p)">🗑</button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -415,28 +452,23 @@
                             </div>
 
                             <!-- Dynamic Headers -->
-                            <div class="items-table-header"
-                                style="grid-template-columns:2fr 80px 80px 70px 70px 80px 36px;padding:0 0 8px;color:var(--text2);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;">
+                            <div class="items-table-header">
                                 <span>Product</span><span>Qty</span><span>Rate
                                     ({{company.currency}})</span><span>Disc%</span><span>GST%</span><span>Total</span><span></span>
                             </div>
-                            <div v-for="(item,i) in inv.items" :key="item._id" style="margin-bottom:8px;">
-                                <div
-                                    style="display:grid;grid-template-columns:2fr 80px 80px 70px 70px 80px 36px;gap:8px;align-items:center;">
-                                    <input class="form-input" v-model="item.name" placeholder="Product name"
-                                        style="padding:9px 10px;" />
+                            <div v-for="(item,i) in inv.items" :key="item._id" class="inv-item-wrap">
+                                <div class="inv-item-row">
+                                    <input class="form-input inv-item-name" v-model="item.name" placeholder="Product name" />
                                     <input class="form-input" v-model.number="item.qty" type="number" min="1"
-                                        placeholder="1" style="padding:9px 10px;text-align:center;" />
+                                        placeholder="Qty" style="text-align:center;" />
                                     <input class="form-input" v-model.number="item.rate" type="number" min="0"
-                                        placeholder="0.00" style="padding:9px 10px;text-align:right;" />
+                                        placeholder="Rate" style="text-align:right;" />
                                     <input class="form-input" v-model.number="item.disc" type="number" min="0" max="100"
-                                        placeholder="0" style="padding:9px 10px;text-align:center;" />
+                                        placeholder="Disc%" style="text-align:center;" />
                                     <input class="form-input" v-model.number="item.gst" type="number" min="0" max="100"
-                                        placeholder="0" style="padding:9px 10px;text-align:center;" />
-                                    <span
-                                        style="font-family:var(--mono);font-weight:700;font-size:13px;text-align:right;padding-right:4px;">{{company.currency}}{{calcItemTotal(item).toFixed(2)}}</span>
-                                    <button class="btn btn-danger btn-xs" @click="removeInvItem(i)"
-                                        style="width:32px;height:32px;padding:0;justify-content:center;">✕</button>
+                                        placeholder="GST%" style="text-align:center;" />
+                                    <span class="inv-item-total">{{company.currency}}{{calcItemTotal(item).toFixed(2)}}</span>
+                                    <button class="btn btn-danger btn-xs inv-item-del" @click="removeInvItem(i)">✕</button>
                                 </div>
                             </div>
                             <div v-if="inv.items.length===0"
@@ -800,18 +832,7 @@
                         <!-- Controls -->
                         <div class="no-print"
                             style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:16px;align-items:flex-start;">
-                            <!-- Template -->
-                            <div>
-                                <div
-                                    style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:8px;">
-                                    Template</div>
-                                <div style="display:flex;gap:8px;">
-                                    <button class="btn btn-sm" :class="invTemplate===1?'btn-primary':'btn-secondary'"
-                                        @click="invTemplate=1">🌟 Classic</button>
-                                    <button class="btn btn-sm" :class="invTemplate===2?'btn-primary':'btn-secondary'"
-                                        @click="invTemplate=2">🌙 Dark Elegant</button>
-                                </div>
-                            </div>
+                            <!-- Template removed: only Classic style used -->
                             <!-- Paper Size -->
                             <div>
                                 <div
@@ -840,8 +861,7 @@
                         <!-- Invoice render -->
                         <div class="invoice-preview-wrap">
                             <div id="invoice-render">
-                                <!-- TEMPLATE 1 -->
-                                <div class="inv-t1" v-if="invTemplate===1">
+                                <div class="inv-t1">
                                     <div class="inv-header">
                                         <div style="display:flex;align-items:flex-start;gap:14px;">
                                             <img v-if="company.logo" :src="company.logo"
@@ -917,85 +937,6 @@
                                     </div>
                                     <div class="inv-notes" v-if="previewInv.notes">📝 {{previewInv.notes}}</div>
                                     <div class="inv-footer">Thank you for your business! · {{company.name}} ·
-                                        {{company.phone}}</div>
-                                </div>
-
-                                <!-- TEMPLATE 2 -->
-                                <div class="inv-t2" v-if="invTemplate===2">
-                                    <div class="inv-header">
-                                        <div style="display:flex;align-items:flex-start;gap:14px;">
-                                            <img v-if="company.logo" :src="company.logo"
-                                                style="height:52px;max-width:90px;object-fit:contain;border-radius:6px;flex-shrink:0;" />
-                                            <div>
-                                                <div class="inv-brand">{{company.name}}</div>
-                                                <div class="inv-tagline" v-if="company.address">{{company.address}}
-                                                </div>
-                                                <div class="inv-tagline" v-if="company.phone">📞 {{company.phone}}</div>
-                                                <div class="inv-tagline" v-if="company.email">📧 {{company.email}}</div>
-                                                <div class="inv-tagline" v-if="company.gst">GST: {{company.gst}}</div>
-                                            </div>
-                                        </div>
-                                        <div class="inv-meta">
-                                            <strong>INVOICE</strong>
-                                            #{{previewInv.number}}<br />
-                                            {{formatDate(previewInv.date)}}
-                                        </div>
-                                    </div>
-                                    <div class="inv-divider"></div>
-                                    <div class="inv-section" v-if="previewInv.customer||previewInv.customerAddress">
-                                        <div class="inv-from">
-                                            <div class="inv-label">From</div>
-                                            <strong>{{company.name}}</strong>
-                                            {{company.address}}<br />{{company.phone}}
-                                        </div>
-                                        <div class="inv-to">
-                                            <div class="inv-label">Bill To</div>
-                                            <strong>{{previewInv.customer||'Customer'}}</strong>
-                                            {{previewInv.customerAddress}}<br />{{previewInv.customerPhone}}
-                                        </div>
-                                    </div>
-                                    <table>
-                                        <thead>
-                                            <tr>
-                                                <th style="width:40%">Item</th>
-                                                <th style="text-align:center">Qty</th>
-                                                <th style="text-align:right">Rate</th>
-                                                <th style="text-align:right">Disc%</th>
-                                                <th style="text-align:right">GST%</th>
-                                                <th style="text-align:right">Amount</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr v-for="(item,i) in previewInv.items" :key="i">
-                                                <td>{{item.name}}</td>
-                                                <td style="text-align:center">{{item.qty}}</td>
-                                                <td style="text-align:right">
-                                                    {{company.currency}}{{Number(item.rate).toFixed(2)}}</td>
-                                                <td style="text-align:right">{{item.disc||0}}%</td>
-                                                <td style="text-align:right">{{item.gst||0}}%</td>
-                                                <td style="text-align:right;font-weight:700">
-                                                    {{company.currency}}{{calcItemTotal(item).toFixed(2)}}</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                    <div class="inv-totals">
-                                        <div class="totals-box">
-                                            <div class="totals-row">
-                                                <span>Subtotal</span><span>{{company.currency}}{{previewSubtotal.toFixed(2)}}</span>
-                                            </div>
-                                            <div class="totals-row">
-                                                <span>Discount</span><span>-{{company.currency}}{{previewDiscount.toFixed(2)}}</span>
-                                            </div>
-                                            <div class="totals-row">
-                                                <span>GST</span><span>+{{company.currency}}{{previewGst.toFixed(2)}}</span>
-                                            </div>
-                                            <div class="totals-row grand">
-                                                <span>TOTAL</span><span>{{company.currency}}{{previewTotal.toFixed(2)}}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="inv-notes" v-if="previewInv.notes">📝 {{previewInv.notes}}</div>
-                                    <div class="inv-footer">Thank you for your business · {{company.name}} ·
                                         {{company.phone}}</div>
                                 </div>
                             </div>
