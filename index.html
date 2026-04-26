@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
     <title>Star Invoice - Inventory & Invoice Manager</title>
     <script src="https://cdn.jsdelivr.net/npm/vue@2.7.14/dist/vue.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
     <link
         href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&family=Noto+Sans+Tamil:wght@400;500;600;700&display=swap"
         rel="stylesheet" />
@@ -73,61 +73,78 @@
 
             <!-- RIGHT FORM PANEL -->
             <div class="setup-form-panel">
-            <div class="setup-card">
-                <div class="setup-card-topbar">
-                    <div class="setup-logo">
-                        <div class="logo-icon">★</div>
-                        <span>Star <em>Invoice</em></span>
+                <div class="setup-card">
+                    <div class="setup-card-topbar">
+                        <div class="setup-logo">
+                            <div class="logo-icon">★</div>
+                            <span>Star <em>Invoice</em></span>
+                        </div>
+                        <button class="lang-toggle-btn" @click="lang = lang === 'ta' ? 'en' : 'ta'">
+                            {{ lang === 'ta' ? '🇬🇧 English' : '🇮🇳 தமிழ்' }}
+                        </button>
                     </div>
-                    <button class="lang-toggle-btn" @click="lang = lang === 'ta' ? 'en' : 'ta'">
-                        {{ lang === 'ta' ? '🇬🇧 English' : '🇮🇳 தமிழ்' }}
-                    </button>
-                </div>
-                <div class="setup-title">{{t.createCompanyTitle}}</div>
-                <div class="setup-sub">{{t.createCompanySub}}</div>
+                    <div class="setup-title">{{t.createCompanyTitle}}</div>
+                    <div class="setup-sub">{{t.createCompanySub}}</div>
 
-                <div class="form-group">
-                    <label class="form-label">{{t.shopName}} <span style="color:var(--danger)">*</span></label>
-                    <input class="form-input" v-model="form.name" :placeholder="lang==='ta' ? 'எ.கா. ஸ்ரீ முருகன் டிரேடர்ஸ்' : 'e.g. Sri Murugan Traders'"
-                        maxlength="80" />
-                </div>
-                <div class="form-row">
                     <div class="form-group">
-                        <label class="form-label">{{t.phone}} <span style="color:var(--danger)">*</span></label>
-                        <input class="form-input" v-model="form.phone" placeholder="+91 98765 43210" maxlength="20" />
+                        <label class="form-label">{{t.shopName}} <span style="color:var(--danger)">*</span></label>
+                        <input class="form-input" v-model="form.name"
+                            :placeholder="lang==='ta' ? 'எ.கா. ஸ்ரீ முருகன் டிரேடர்ஸ்' : 'e.g. Sri Murugan Traders'"
+                            maxlength="80" />
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">{{t.phone}} <span style="color:var(--danger)">*</span></label>
+                            <input class="form-input" v-model="form.phone" placeholder="+91 98765 43210"
+                                maxlength="20" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">{{t.email}} <span class="opt">{{t.optional}}</span></label>
+                            <input class="form-input" v-model="form.email" placeholder="shop@email.com" type="email" />
+                        </div>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">{{t.email}} <span class="opt">{{t.optional}}</span></label>
-                        <input class="form-input" v-model="form.email" placeholder="shop@email.com" type="email" />
+                        <label class="form-label">{{t.address}} <span style="color:var(--danger)">*</span></label>
+                        <textarea class="form-input" v-model="form.address"
+                            :placeholder="lang==='ta' ? 'தெரு, நகரம், மாநிலம் - பின்' : 'Street, City, State - PIN'"
+                            rows="2"></textarea>
                     </div>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">{{t.address}} <span style="color:var(--danger)">*</span></label>
-                    <textarea class="form-input" v-model="form.address" :placeholder="lang==='ta' ? 'தெரு, நகரம், மாநிலம் - பின்' : 'Street, City, State - PIN'"
-                        rows="2"></textarea>
-                </div>
-                <div class="form-row">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">{{t.gst}} <span class="opt">{{t.optional}}</span></label>
+                            <input class="form-input" v-model="form.gst" placeholder="22AAAAA0000A1Z5" maxlength="15" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">{{t.currency}}</label>
+                            <select class="form-input" v-model="form.currency">
+                                <option value="₹">₹ INR</option>
+                                <option value="$">$ USD</option>
+                                <option value="€">€ EUR</option>
+                                <option value="£">£ GBP</option>
+                                <option value="¥">¥ JPY</option>
+                            </select>
+                        </div>
+                    </div>
                     <div class="form-group">
-                        <label class="form-label">{{t.gst}} <span class="opt">{{t.optional}}</span></label>
-                        <input class="form-input" v-model="form.gst" placeholder="22AAAAA0000A1Z5" maxlength="15" />
+                        <label class="form-label">{{t.companyLogo}} <span class="opt">{{t.optional}}</span></label>
+                        <div class="img-upload-area" :class="{'has-image':!!form.logo}"
+                            @click="$refs.setupLogoInput.click()">
+                            <img v-if="form.logo" :src="form.logo" class="img-upload-preview" />
+                            <button v-if="form.logo" class="img-remove-btn" @click.stop="form.logo=''">✕</button>
+                            <div v-if="!form.logo" class="img-upload-placeholder">
+                                <span class="upload-icon">🏢</span>
+                                <span>{{t.uploadLogo}}</span>
+                            </div>
+                        </div>
+                        <input type="file" ref="setupLogoInput" accept="image/*" style="display:none"
+                            @change="handleLogoUpload('form',$event)" />
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">{{t.currency}}</label>
-                        <select class="form-input" v-model="form.currency">
-                            <option value="₹">₹ INR</option>
-                            <option value="$">$ USD</option>
-                            <option value="€">€ EUR</option>
-                            <option value="£">£ GBP</option>
-                            <option value="¥">¥ JPY</option>
-                        </select>
-                    </div>
-                </div>
-                <button class="btn btn-primary btn-full" @click="createCompany" :disabled="formLoading">
-                    <span class="spinner" v-if="formLoading"></span>
-                    <span v-else>★</span>
-                    {{formLoading ? t.creating : t.createBtn}}
-                </button>
-            </div><!-- /setup-card -->
+                    <button class="btn btn-primary btn-full" @click="createCompany" :disabled="formLoading">
+                        <span class="spinner" v-if="formLoading"></span>
+                        <span v-else>★</span>
+                        {{formLoading ? t.creating : t.createBtn}}
+                    </button>
+                </div><!-- /setup-card -->
             </div><!-- /setup-form-panel -->
         </div><!-- /setup-screen -->
 
@@ -137,14 +154,17 @@
             <!-- TOPBAR -->
             <div class="topbar no-print">
                 <div class="topbar-left">
-                    <div class="topbar-logo">Star <em>Invoice</em></div>
+                    <div class="topbar-logo">
+                        <div class="topbar-logo-icon">★</div><em><span style="color: black;">Star</span> Invoice</em>
+                    </div>
+                    <div class="topbar-divider"></div>
                     <div class="shop-badge">{{company.name}}</div>
                 </div>
                 <div class="topbar-right">
                     <button class="theme-toggle" @click="toggleTheme" :title="theme==='dark'?'Light Mode':'Dark Mode'">
                         {{theme==='dark'?'☀️':'🌙'}}
                     </button>
-                    <button class="btn btn-danger btn-sm no-print" @click="confirmDeleteCompany">🗑 Reset</button>
+                    <button class="btn btn-topbar-reset btn-sm no-print" @click="confirmDeleteCompany">🗑 Reset</button>
                 </div>
             </div>
 
@@ -288,8 +308,18 @@
                                     </thead>
                                     <tbody>
                                         <tr v-for="p in filteredInventory" :key="p.id">
-                                            <td><strong>{{p.name}}</strong>
-                                                <div style="font-size:11px;color:var(--text2)">{{p.unit}}</div>
+                                            <td>
+                                                <div style="display:flex;align-items:center;gap:10px;">
+                                                    <img v-if="p.image" :src="p.image"
+                                                        style="width:36px;height:36px;object-fit:cover;border-radius:6px;border:1px solid var(--border);flex-shrink:0;" />
+                                                    <div v-else
+                                                        style="width:36px;height:36px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">
+                                                        📦</div>
+                                                    <div>
+                                                        <strong>{{p.name}}</strong>
+                                                        <div style="font-size:11px;color:var(--text2)">{{p.unit}}</div>
+                                                    </div>
+                                                </div>
                                             </td>
                                             <td><span
                                                     style="font-family:var(--mono);font-size:12px;color:var(--text2)">{{p.sku||'—'}}</span>
@@ -512,6 +542,10 @@
                             <div
                                 style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--accent);margin-bottom:10px;">
                                 Current Company</div>
+                            <div v-if="company.logo" style="margin-bottom:12px;">
+                                <img :src="company.logo"
+                                    style="height:56px;max-width:160px;object-fit:contain;border-radius:8px;border:1px solid var(--border);" />
+                            </div>
                             <div class="company-name-big">{{company.name}}</div>
                             <div class="company-detail">📞 {{company.phone}}</div>
                             <div class="company-detail" v-if="company.email">📧 {{company.email}}</div>
@@ -619,6 +653,21 @@
                                 <option :value="18">18%</option>
                                 <option :value="28">28%</option>
                             </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Product Image <span class="opt">(optional)</span></label>
+                            <div class="img-upload-area" :class="{'has-image':!!pform.image}"
+                                @click="$refs.productImgInput.click()">
+                                <img v-if="pform.image" :src="pform.image" class="img-upload-preview" />
+                                <button v-if="pform.image" class="img-remove-btn"
+                                    @click.stop="pform.image=''">✕</button>
+                                <div v-if="!pform.image" class="img-upload-placeholder">
+                                    <span class="upload-icon">📦</span>
+                                    <span>Click to upload product image</span>
+                                </div>
+                            </div>
+                            <input type="file" ref="productImgInput" accept="image/*" style="display:none"
+                                @change="handleProductImageUpload" />
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -790,12 +839,17 @@
                                 <!-- TEMPLATE 1 -->
                                 <div class="inv-t1" v-if="invTemplate===1">
                                     <div class="inv-header">
-                                        <div>
-                                            <div class="inv-brand">{{company.name}}</div>
-                                            <div class="inv-tagline" v-if="company.address">{{company.address}}</div>
-                                            <div class="inv-tagline" v-if="company.phone">📞 {{company.phone}}</div>
-                                            <div class="inv-tagline" v-if="company.email">📧 {{company.email}}</div>
-                                            <div class="inv-tagline" v-if="company.gst">GST: {{company.gst}}</div>
+                                        <div style="display:flex;align-items:flex-start;gap:14px;">
+                                            <img v-if="company.logo" :src="company.logo"
+                                                style="height:52px;max-width:90px;object-fit:contain;border-radius:6px;flex-shrink:0;" />
+                                            <div>
+                                                <div class="inv-brand">{{company.name}}</div>
+                                                <div class="inv-tagline" v-if="company.address">{{company.address}}
+                                                </div>
+                                                <div class="inv-tagline" v-if="company.phone">📞 {{company.phone}}</div>
+                                                <div class="inv-tagline" v-if="company.email">📧 {{company.email}}</div>
+                                                <div class="inv-tagline" v-if="company.gst">GST: {{company.gst}}</div>
+                                            </div>
                                         </div>
                                         <div class="inv-meta">
                                             <strong>INVOICE</strong>
@@ -865,12 +919,17 @@
                                 <!-- TEMPLATE 2 -->
                                 <div class="inv-t2" v-if="invTemplate===2">
                                     <div class="inv-header">
-                                        <div>
-                                            <div class="inv-brand">{{company.name}}</div>
-                                            <div class="inv-tagline" v-if="company.address">{{company.address}}</div>
-                                            <div class="inv-tagline" v-if="company.phone">📞 {{company.phone}}</div>
-                                            <div class="inv-tagline" v-if="company.email">📧 {{company.email}}</div>
-                                            <div class="inv-tagline" v-if="company.gst">GST: {{company.gst}}</div>
+                                        <div style="display:flex;align-items:flex-start;gap:14px;">
+                                            <img v-if="company.logo" :src="company.logo"
+                                                style="height:52px;max-width:90px;object-fit:contain;border-radius:6px;flex-shrink:0;" />
+                                            <div>
+                                                <div class="inv-brand">{{company.name}}</div>
+                                                <div class="inv-tagline" v-if="company.address">{{company.address}}
+                                                </div>
+                                                <div class="inv-tagline" v-if="company.phone">📞 {{company.phone}}</div>
+                                                <div class="inv-tagline" v-if="company.email">📧 {{company.email}}</div>
+                                                <div class="inv-tagline" v-if="company.gst">GST: {{company.gst}}</div>
+                                            </div>
                                         </div>
                                         <div class="inv-meta">
                                             <strong>INVOICE</strong>
@@ -994,6 +1053,20 @@
                                     <option value="£">£ GBP</option>
                                 </select>
                             </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Company Logo <span class="opt">(optional)</span></label>
+                            <div class="img-upload-area" :class="{'has-image':!!eform.logo}"
+                                @click="$refs.editLogoInput.click()">
+                                <img v-if="eform.logo" :src="eform.logo" class="img-upload-preview" />
+                                <button v-if="eform.logo" class="img-remove-btn" @click.stop="eform.logo=''">✕</button>
+                                <div v-if="!eform.logo" class="img-upload-placeholder">
+                                    <span class="upload-icon">🏢</span>
+                                    <span>Click to upload logo</span>
+                                </div>
+                            </div>
+                            <input type="file" ref="editLogoInput" accept="image/*" style="display:none"
+                                @change="handleLogoUpload('eform',$event)" />
                         </div>
                     </div>
                     <div class="modal-footer">

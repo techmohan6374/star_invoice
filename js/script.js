@@ -4,10 +4,10 @@ new Vue({
         const today = new Date().toISOString().split('T')[0];
         return {
             // Theme
-            theme: 'light',
+            theme: 'dark',
             // Company
             company: null,
-            form: { name: '', phone: '', email: '', address: '', gst: '', currency: '₹' },
+            form: { name: '', phone: '', email: '', address: '', gst: '', currency: '₹', logo: '' },
             eform: {},
             // Tabs
             tab: 'dashboard',
@@ -21,7 +21,7 @@ new Vue({
             // Inventory
             inventory: [],
             invSearch: '',
-            pform: { name: '', sku: '', category: '', rate: 0, unit: 'Nos', qty: 0, lowAt: 5, gst: 0 },
+            pform: { name: '', sku: '', category: '', rate: 0, unit: 'Nos', qty: 0, lowAt: 5, gst: 0, image: '' },
             editingProduct: null,
             adjustingProduct: null,
             stockAdj: { type: 'add', qty: 0, reason: '' },
@@ -72,6 +72,8 @@ new Vue({
                     address: 'Address',
                     gst: 'GST Number',
                     currency: 'Currency Symbol',
+                    companyLogo: 'Company Logo',
+                    uploadLogo: 'Click to upload logo',
                     createBtn: 'Create Company & Get Started',
                     creating: 'Creating...',
                     headline1: 'Invoice smarter,',
@@ -93,6 +95,8 @@ new Vue({
                     address: 'முகவரி',
                     gst: 'ஜிஎஸ்டி எண்',
                     currency: 'நாணய சின்னம்',
+                    companyLogo: 'நிறுவன லோகோ',
+                    uploadLogo: 'லோகோ பதிவேற்ற கிளிக் செய்யவும்',
                     createBtn: 'நிறுவனத்தை உருவாக்கி தொடங்குங்கள்',
                     creating: 'உருவாக்குகிறது...',
                     headline1: 'புத்திசாலித்தனமாக விலைப்பட்டியல்,',
@@ -218,7 +222,7 @@ new Vue({
             this.inventory = [];
             this.invoices = [];
             this.invCounter = 1;
-            this.form = { name: '', phone: '', email: '', address: '', gst: '', currency: '₹' };
+            this.form = { name: '', phone: '', email: '', address: '', gst: '', currency: '₹', logo: '' };
             this.tab = 'dashboard';
             this.toast('Company deleted. You can create a new one.', 'info', '🗑');
         },
@@ -237,7 +241,7 @@ new Vue({
         // ── PRODUCT ──
         openAddProduct() {
             this.editingProduct = null;
-            this.pform = { name: '', sku: '', category: '', rate: 0, unit: 'Nos', qty: 0, lowAt: 5, gst: 0 };
+            this.pform = { name: '', sku: '', category: '', rate: 0, unit: 'Nos', qty: 0, lowAt: 5, gst: 0, image: '' };
             this.modals.product = true;
         },
         editProduct(p) {
@@ -415,26 +419,43 @@ new Vue({
             const s = this.paperSizes.find(p => p.id === this.paperSize);
             return s ? { w: s.w, h: s.h } : { w: 210, h: 297 };
         },
-        async saveAndDownload() {
-            this.pdfLoading = true;
-            await this.$nextTick();
-            const el = document.getElementById('invoice-render');
-            const dims = this.getCurrentPaperDims();
-            const opt = {
-                margin: 0,
-                filename: `invoice-${this.previewInv.number || 'draft'}.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true, allowTaint: true },
-                jsPDF: { unit: 'mm', format: [dims.w, dims.h], orientation: dims.w > dims.h ? 'landscape' : 'portrait' }
-            };
-            try {
-                await html2pdf().set(opt).from(el).save();
-                this.toast('PDF downloaded!', 'success', '📄');
-            } catch (e) {
-                this.toast('PDF generation failed', 'error', '❌');
-                console.error(e);
-            }
-            this.pdfLoading = false;
+        saveAndDownload() {
+            const source      = document.getElementById('invoice-render');
+            const baseHref    = window.location.href.replace(/\/[^\/]*$/, '/');
+            const invoiceHTML = source.outerHTML;
+
+            const win = window.open('', '_blank', 'width=960,height=800');
+            win.document.write(`<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Invoice ${this.previewInv.number || 'draft'}</title>
+<base href="${baseHref}">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&family=Noto+Sans+Tamil:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #fff; }
+  @page { margin: 0; size: auto; }
+  @media print {
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+${invoiceHTML}
+<script>
+  document.fonts.ready.then(function() {
+    setTimeout(function() {
+      window.focus();
+      window.print();
+      setTimeout(function() { window.close(); }, 1000);
+    }, 600);
+  });
+<\/script>
+</body>
+</html>`);
+            win.document.close();
         },
 
         // ── STOCK PICKER ──
@@ -465,6 +486,26 @@ new Vue({
             this.toast(`${p.name} (×${qty}) added to invoice`, 'success', '✅');
         },
 
+        // ── IMAGE UPLOADS ──
+        handleLogoUpload(target, event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            if (file.size > 2 * 1024 * 1024) return this.toast('Image too large. Max 2MB.', 'error', '❌');
+            const reader = new FileReader();
+            reader.onload = (e) => { this[target].logo = e.target.result; };
+            reader.readAsDataURL(file);
+            event.target.value = '';
+        },
+        handleProductImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            if (file.size > 2 * 1024 * 1024) return this.toast('Image too large. Max 2MB.', 'error', '❌');
+            const reader = new FileReader();
+            reader.onload = (e) => { this.pform.image = e.target.result; };
+            reader.readAsDataURL(file);
+            event.target.value = '';
+        },
+
         // ── UTILS ──
         formatDate(d) {
             if (!d) return '';
@@ -478,7 +519,7 @@ new Vue({
         loadAll() {
             // Theme
             const t = localStorage.getItem('ix_theme');
-            if (t) this.theme = t;
+            this.theme = t || 'dark';
             // Company
             const c = localStorage.getItem('ix_company');
             if (c) this.company = JSON.parse(c);
