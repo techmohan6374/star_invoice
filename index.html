@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+    <title>Star Invoice - Inventory & Invoice Manager</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.7.14/dist/vue.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <div id="app">
+
+        <!-- LOADING OVERLAY -->
+        <transition name="fade">
+            <div class="loading-overlay" v-if="globalLoading">
+                <div class="spinner" style="width:40px;height:40px;border-width:3px;"></div>
+                <div class="loading-text">{{loadingText}}</div>
+            </div>
+        </transition>
+
+        <!-- TOAST -->
+        <div class="toast-container">
+            <div v-for="t in toasts" :key="t.id" class="toast" :class="'toast-'+t.type">
+                <span>{{t.icon}}</span> {{t.msg}}
+            </div>
+        </div>
+
+        <!-- ═══════════ SETUP SCREEN ═══════════ -->
+        <div class="setup-screen" v-if="!company" :data-theme="theme">
+
+            <!-- LEFT BRAND PANEL -->
+            <div class="setup-brand-panel">
+                <div class="setup-brand-grid"></div>
+                <div class="setup-brand-inner">
+                    <div class="setup-brand-logo">
+                        <div class="logo-icon-lg">★</div>
+                        <div class="brand-name">Star <em>Invoice</em></div>
+                    </div>
+                    <div class="setup-brand-headline">
+                        Invoice smarter,<br><span>grow faster.</span>
+                    </div>
+                    <div class="setup-brand-desc">
+                        The all-in-one invoicing and inventory platform built for modern businesses. Professional invoices in seconds.
+                    </div>
+                    <div class="setup-brand-features">
+                        <div class="setup-feature-item">
+                            <div class="setup-feature-icon">🧾</div>
+                            <span>Generate professional PDF invoices instantly</span>
+                        </div>
+                        <div class="setup-feature-item">
+                            <div class="setup-feature-icon">📦</div>
+                            <span>Real-time inventory tracking with low-stock alerts</span>
+                        </div>
+                        <div class="setup-feature-item">
+                            <div class="setup-feature-icon">📊</div>
+                            <span>Dashboard analytics and billing history</span>
+                        </div>
+                        <div class="setup-feature-item">
+                            <div class="setup-feature-icon">🔒</div>
+                            <span>100% offline — your data stays on your device</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="setup-brand-footer">© 2026 Star Invoice. All rights reserved.</div>
+            </div>
+
+            <!-- RIGHT FORM PANEL -->
+            <div class="setup-form-panel">
+            <div class="setup-card">
+                <div class="setup-logo">
+                    <div class="logo-icon">★</div>
+                    <span>Star <em>Invoice</em></span>
+                </div>
+                <div class="setup-title">Create Your Company</div>
+                <div class="setup-sub">Set up once. Invoice smarter. Only one company per device.</div>
+
+                <div class="form-group">
+                    <label class="form-label">Shop / Business Name <span style="color:var(--danger)">*</span></label>
+                    <input class="form-input" v-model="form.name" placeholder="e.g. Sri Murugan Traders"
+                        maxlength="80" />
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Phone Number <span style="color:var(--danger)">*</span></label>
+                        <input class="form-input" v-model="form.phone" placeholder="+91 98765 43210" maxlength="20" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email <span class="opt">(optional)</span></label>
+                        <input class="form-input" v-model="form.email" placeholder="shop@email.com" type="email" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Address <span style="color:var(--danger)">*</span></label>
+                    <textarea class="form-input" v-model="form.address" placeholder="Street, City, State - PIN"
+                        rows="2"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">GST Number <span class="opt">(optional)</span></label>
+                        <input class="form-input" v-model="form.gst" placeholder="22AAAAA0000A1Z5" maxlength="15" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Currency Symbol</label>
+                        <select class="form-input" v-model="form.currency">
+                            <option value="₹">₹ INR</option>
+                            <option value="$">$ USD</option>
+                            <option value="€">€ EUR</option>
+                            <option value="£">£ GBP</option>
+                            <option value="¥">¥ JPY</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn btn-primary btn-full" @click="createCompany" :disabled="formLoading">
+                    <span class="spinner" v-if="formLoading"></span>
+                    <span v-else>★</span>
+                    {{formLoading ? 'Creating...' : 'Create Company & Get Started'}}
+                </button>
+            </div><!-- /setup-card -->
+            </div><!-- /setup-form-panel -->
+        </div><!-- /setup-screen -->
+
+        <!-- ═══════════ MAIN APP ═══════════ -->
+        <div class="app-layout" v-else :data-theme="theme">
+
+            <!-- TOPBAR -->
+            <div class="topbar no-print">
+                <div class="topbar-left">
+                    <div class="topbar-logo">Star <em>Invoice</em></div>
+                    <div class="shop-badge">{{company.name}}</div>
+                </div>
+                <div class="topbar-right">
+                    <button class="theme-toggle" @click="toggleTheme" :title="theme==='dark'?'Light Mode':'Dark Mode'">
+                        {{theme==='dark'?'☀️':'🌙'}}
+                    </button>
+                    <button class="btn btn-danger btn-sm no-print" @click="confirmDeleteCompany">🗑 Reset</button>
+                </div>
+            </div>
+
+            <!-- NAV TABS -->
+            <div class="nav-tabs no-print">
+                <div class="nav-tab" :class="{active:tab==='dashboard'}" @click="tab='dashboard'">
+                    <span class="tab-icon">📊</span> Dashboard
+                </div>
+                <div class="nav-tab" :class="{active:tab==='inventory'}" @click="tab='inventory'">
+                    <span class="tab-icon">📦</span> Inventory
+                </div>
+                <div class="nav-tab" :class="{active:tab==='invoice'}" @click="tab='invoice'">
+                    <span class="tab-icon">🧾</span> New Invoice
+                </div>
+                <div class="nav-tab" :class="{active:tab==='invoices'}" @click="tab='invoices'">
+                    <span class="tab-icon">📋</span> Invoice History
+                </div>
+                <div class="nav-tab" :class="{active:tab==='settings'}" @click="tab='settings'">
+                    <span class="tab-icon">⚙️</span> Settings
+                </div>
+            </div>
+
+            <!-- PAGE CONTENT -->
+            <div class="page-content">
+
+                <!-- ─── DASHBOARD ─── -->
+                <transition name="slide">
+                    <div v-if="tab==='dashboard'">
+                        <div class="stats-grid">
+                            <div class="stat-card" style="--stat-color:#ff2c2d">
+                                <div class="stat-icon">📦</div>
+                                <div class="stat-label">Products</div>
+                                <div class="stat-value">{{inventory.length}}</div>
+                            </div>
+                            <div class="stat-card" style="--stat-color:#10b981;">
+                                <div class="stat-icon">🧾</div>
+                                <div class="stat-label">Invoices</div>
+                                <div class="stat-value">{{invoices.length}}</div>
+                            </div>
+                            <div class="stat-card" style="--stat-color:#f59e0b">
+                                <div class="stat-icon">💰</div>
+                                <div class="stat-label">Total Billed</div>
+                                <div class="stat-value" style="font-size:16px;">
+                                    {{company.currency}}{{totalBilled.toLocaleString('en-IN')}}</div>
+                            </div>
+                            <div class="stat-card" style="--stat-color:#ef4444">
+                                <div class="stat-icon">⚠️</div>
+                                <div class="stat-label">Low Stock</div>
+                                <div class="stat-value">{{lowStockCount}}</div>
+                            </div>
+                        </div>
+
+                        <!-- Low stock alert -->
+                        <div v-if="lowStockCount>0" class="card"
+                            style="border-left:3px solid var(--warn);margin-bottom:16px;">
+                            <div class="card-title" style="color:var(--warn);font-size:14px;margin-bottom:12px;">⚠️ Low
+                                Stock Alert ({{lowStockCount}} items)</div>
+                            <div v-for="p in lowStockItems" :key="p.id"
+                                style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px;">
+                                <span>{{p.name}}</span>
+                                <span class="badge badge-warn">{{p.qty}} left</span>
+                            </div>
+                        </div>
+
+                        <!-- Recent Invoices -->
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title"><span class="icon">📋</span> Recent Invoices</div>
+                                <button class="btn btn-secondary btn-sm" @click="tab='invoice'">+ New Invoice</button>
+                            </div>
+                            <div v-if="invoices.length===0" class="empty-state">
+                                <div class="empty-icon">🧾</div>
+                                <div class="empty-title">No invoices yet</div>
+                                <div class="empty-sub">Create your first invoice to get started</div>
+                            </div>
+                            <div class="table-wrap" v-else>
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Invoice #</th>
+                                            <th>Date</th>
+                                            <th>Customer</th>
+                                            <th>Amount</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-for="inv in recentInvoices" :key="inv.id">
+                                            <td><span
+                                                    style="font-family:var(--mono);font-weight:700;color:var(--accent)">#{{inv.number}}</span>
+                                            </td>
+                                            <td>{{formatDate(inv.date)}}</td>
+                                            <td>{{inv.customer||'—'}}</td>
+                                            <td><span
+                                                    style="font-family:var(--mono);font-weight:700">{{company.currency}}{{inv.total.toLocaleString('en-IN')}}</span>
+                                            </td>
+                                            <td><button class="btn btn-secondary btn-xs" @click="viewInvoice(inv)">👁
+                                                    View</button></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </transition>
+
+                <!-- ─── INVENTORY ─── -->
+                <transition name="slide">
+                    <div v-if="tab==='inventory'">
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title"><span class="icon">📦</span> Inventory Management</div>
+                                <button class="btn btn-primary btn-sm" @click="openAddProduct">+ Add Product</button>
+                            </div>
+
+                            <div class="search-bar" style="margin-bottom:14px;">
+                                <span class="search-icon">🔍</span>
+                                <input class="form-input" v-model="invSearch" placeholder="Search products..."
+                                    style="padding-left:36px;" />
+                            </div>
+
+                            <div v-if="filteredInventory.length===0" class="empty-state">
+                                <div class="empty-icon">📦</div>
+                                <div class="empty-title">No products found</div>
+                                <div class="empty-sub" v-if="inventory.length===0">Add your first product to manage
+                                    stock</div>
+                                <div class="empty-sub" v-else>Try a different search term</div>
+                            </div>
+                            <div class="table-wrap" v-else>
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Product</th>
+                                            <th>SKU</th>
+                                            <th>Category</th>
+                                            <th>Rate</th>
+                                            <th>Stock</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-for="p in filteredInventory" :key="p.id">
+                                            <td><strong>{{p.name}}</strong>
+                                                <div style="font-size:11px;color:var(--text2)">{{p.unit}}</div>
+                                            </td>
+                                            <td><span
+                                                    style="font-family:var(--mono);font-size:12px;color:var(--text2)">{{p.sku||'—'}}</span>
+                                            </td>
+                                            <td>{{p.category||'—'}}</td>
+                                            <td><span
+                                                    style="font-family:var(--mono);font-weight:700">{{company.currency}}{{Number(p.rate).toFixed(2)}}</span>
+                                            </td>
+                                            <td>
+                                                <div style="font-family:var(--mono);font-weight:700;">{{p.qty}}</div>
+                                                <div class="stock-bar" style="width:60px">
+                                                    <div class="stock-fill"
+                                                        :style="{width:stockPct(p)+'%',background:stockColor(p)}"></div>
+                                                </div>
+                                            </td>
+                                            <td><span class="badge" :class="stockBadge(p)">{{stockLabel(p)}}</span></td>
+                                            <td>
+                                                <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                                                    <button class="btn btn-secondary btn-xs"
+                                                        @click="editProduct(p)">✏️</button>
+                                                    <button class="btn btn-secondary btn-xs"
+                                                        @click="adjustStock(p)">±</button>
+                                                    <button class="btn btn-danger btn-xs"
+                                                        @click="deleteProduct(p)">🗑</button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </transition>
+
+                <!-- ─── NEW INVOICE ─── -->
+                <transition name="slide">
+                    <div v-if="tab==='invoice'">
+                        <div class="card" style="margin-bottom:16px;">
+                            <div class="card-header">
+                                <div class="card-title"><span class="icon">🧾</span> Invoice Builder</div>
+                                <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+                                    <label style="font-size:12px;font-weight:600;color:var(--text2);">Mode:</label>
+                                    <button class="btn btn-sm"
+                                        :class="invMode==='dynamic'?'btn-primary':'btn-secondary'"
+                                        @click="invMode='dynamic'">✏️ Dynamic</button>
+                                    <button class="btn btn-sm" :class="invMode==='stock'?'btn-primary':'btn-secondary'"
+                                        @click="invMode='stock'">📦 From Stock</button>
+                                </div>
+                            </div>
+
+                            <!-- Customer Info -->
+                            <div class="section-title">👤 Customer Details</div>
+                            <div class="form-row" style="margin-bottom:16px;">
+                                <div class="form-group" style="margin-bottom:0">
+                                    <label class="form-label">Customer Name <span class="opt">(optional)</span></label>
+                                    <input class="form-input" v-model="inv.customer"
+                                        placeholder="Customer / Client name" />
+                                </div>
+                                <div class="form-group" style="margin-bottom:0">
+                                    <label class="form-label">Customer Phone <span class="opt">(optional)</span></label>
+                                    <input class="form-input" v-model="inv.customerPhone"
+                                        placeholder="+91 98765 43210" />
+                                </div>
+                            </div>
+                            <div class="form-row" style="margin-bottom:20px;">
+                                <div class="form-group" style="margin-bottom:0">
+                                    <label class="form-label">Customer Address <span
+                                            class="opt">(optional)</span></label>
+                                    <input class="form-input" v-model="inv.customerAddress"
+                                        placeholder="Billing address" />
+                                </div>
+                                <div class="form-group" style="margin-bottom:0">
+                                    <label class="form-label">Invoice Date</label>
+                                    <input class="form-input" type="date" v-model="inv.date" />
+                                </div>
+                            </div>
+                            <div class="form-group" style="margin-bottom:20px;">
+                                <label class="form-label">Notes <span class="opt">(optional)</span></label>
+                                <textarea class="form-input" v-model="inv.notes" rows="2"
+                                    placeholder="Thank you for your business!"></textarea>
+                            </div>
+
+                            <!-- ITEMS -->
+                            <div class="section-title">🛒 Items
+                                <button class="btn btn-primary btn-xs" @click="addInvItem" style="margin-left:auto">+
+                                    Add Item</button>
+                                <button class="btn btn-secondary btn-xs" v-if="invMode==='stock'"
+                                    @click="openStockPicker">📦 Pick from Stock</button>
+                            </div>
+
+                            <!-- Dynamic Headers -->
+                            <div class="items-table-header"
+                                style="grid-template-columns:2fr 80px 80px 70px 70px 80px 36px;padding:0 0 8px;color:var(--text2);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;">
+                                <span>Product</span><span>Qty</span><span>Rate
+                                    ({{company.currency}})</span><span>Disc%</span><span>GST%</span><span>Total</span><span></span>
+                            </div>
+                            <div v-for="(item,i) in inv.items" :key="item._id" style="margin-bottom:8px;">
+                                <div
+                                    style="display:grid;grid-template-columns:2fr 80px 80px 70px 70px 80px 36px;gap:8px;align-items:center;">
+                                    <input class="form-input" v-model="item.name" placeholder="Product name"
+                                        style="padding:9px 10px;" />
+                                    <input class="form-input" v-model.number="item.qty" type="number" min="1"
+                                        placeholder="1" style="padding:9px 10px;text-align:center;" />
+                                    <input class="form-input" v-model.number="item.rate" type="number" min="0"
+                                        placeholder="0.00" style="padding:9px 10px;text-align:right;" />
+                                    <input class="form-input" v-model.number="item.disc" type="number" min="0" max="100"
+                                        placeholder="0" style="padding:9px 10px;text-align:center;" />
+                                    <input class="form-input" v-model.number="item.gst" type="number" min="0" max="100"
+                                        placeholder="0" style="padding:9px 10px;text-align:center;" />
+                                    <span
+                                        style="font-family:var(--mono);font-weight:700;font-size:13px;text-align:right;padding-right:4px;">{{company.currency}}{{calcItemTotal(item).toFixed(2)}}</span>
+                                    <button class="btn btn-danger btn-xs" @click="removeInvItem(i)"
+                                        style="width:32px;height:32px;padding:0;justify-content:center;">✕</button>
+                                </div>
+                            </div>
+                            <div v-if="inv.items.length===0"
+                                style="text-align:center;padding:20px;color:var(--text2);font-size:13px;border:2px dashed var(--border);border-radius:8px;">
+                                Click "+ Add Item" to start building your invoice
+                            </div>
+
+                            <!-- Totals -->
+                            <div style="display:flex;justify-content:flex-end;margin-top:20px;">
+                                <div style="width:250px;">
+                                    <div
+                                        style="display:flex;justify-content:space-between;padding:7px 0;font-size:13px;color:var(--text2);border-bottom:1px solid var(--border);">
+                                        <span>Subtotal</span><span
+                                            style="font-family:var(--mono);">{{company.currency}}{{invSubtotal.toFixed(2)}}</span>
+                                    </div>
+                                    <div
+                                        style="display:flex;justify-content:space-between;padding:7px 0;font-size:13px;color:var(--text2);border-bottom:1px solid var(--border);">
+                                        <span>Discount</span><span
+                                            style="font-family:var(--mono);color:var(--success);">-{{company.currency}}{{invDiscount.toFixed(2)}}</span>
+                                    </div>
+                                    <div
+                                        style="display:flex;justify-content:space-between;padding:7px 0;font-size:13px;color:var(--text2);border-bottom:1px solid var(--border);">
+                                        <span>GST</span><span
+                                            style="font-family:var(--mono);">+{{company.currency}}{{invGst.toFixed(2)}}</span>
+                                    </div>
+                                    <div
+                                        style="display:flex;justify-content:space-between;padding:10px 0;font-size:17px;font-weight:800;color:var(--accent);">
+                                        <span>Total</span><span
+                                            style="font-family:var(--mono);">{{company.currency}}{{invTotal.toFixed(2)}}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;">
+                                <button class="btn btn-primary" @click="previewInvoice"
+                                    :disabled="inv.items.length===0">
+                                    👁 Preview & Generate
+                                </button>
+                                <button class="btn btn-secondary" @click="resetInvoice">🔄 Reset</button>
+                            </div>
+                        </div>
+                    </div>
+                </transition>
+
+                <!-- ─── INVOICE HISTORY ─── -->
+                <transition name="slide">
+                    <div v-if="tab==='invoices'">
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title"><span class="icon">📋</span> Invoice History
+                                    ({{invoices.length}})</div>
+                                <button class="btn btn-danger btn-sm" v-if="invoices.length>0"
+                                    @click="clearAllInvoices">🗑 Clear All</button>
+                            </div>
+                            <div class="search-bar" style="margin-bottom:14px;">
+                                <span class="search-icon">🔍</span>
+                                <input class="form-input" v-model="invHistSearch"
+                                    placeholder="Search by customer or invoice #..." style="padding-left:36px;" />
+                            </div>
+                            <div v-if="filteredInvoiceHistory.length===0" class="empty-state">
+                                <div class="empty-icon">📋</div>
+                                <div class="empty-title">No invoices found</div>
+                            </div>
+                            <div class="table-wrap" v-else>
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Date</th>
+                                            <th>Customer</th>
+                                            <th>Items</th>
+                                            <th>Total</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-for="inv in filteredInvoiceHistory" :key="inv.id">
+                                            <td><span
+                                                    style="font-family:var(--mono);font-weight:700;color:var(--accent)">#{{inv.number}}</span>
+                                            </td>
+                                            <td>{{formatDate(inv.date)}}</td>
+                                            <td>{{inv.customer||'Walk-in Customer'}}</td>
+                                            <td><span class="badge badge-info">{{inv.items.length}} items</span></td>
+                                            <td><span
+                                                    style="font-family:var(--mono);font-weight:700">{{company.currency}}{{inv.total.toLocaleString('en-IN')}}</span>
+                                            </td>
+                                            <td>
+                                                <div style="display:flex;gap:6px;">
+                                                    <button class="btn btn-secondary btn-xs"
+                                                        @click="viewInvoice(inv)">👁 View</button>
+                                                    <button class="btn btn-danger btn-xs"
+                                                        @click="deleteInvoice(inv)">🗑</button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </transition>
+
+                <!-- ─── SETTINGS ─── -->
+                <transition name="slide">
+                    <div v-if="tab==='settings'">
+                        <div class="company-info-card">
+                            <div
+                                style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--accent);margin-bottom:10px;">
+                                Current Company</div>
+                            <div class="company-name-big">{{company.name}}</div>
+                            <div class="company-detail">📞 {{company.phone}}</div>
+                            <div class="company-detail" v-if="company.email">📧 {{company.email}}</div>
+                            <div class="company-detail">📍 {{company.address}}</div>
+                            <div class="company-detail" v-if="company.gst">🏛 GST: {{company.gst}}</div>
+                            <div class="company-detail">💱 Currency: {{company.currency}}</div>
+                        </div>
+                        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px;">
+                            <button class="btn btn-secondary" @click="openEditCompany">✏️ Edit Company</button>
+                            <button class="btn btn-danger" @click="confirmDeleteCompany">🗑 Delete Company &
+                                Reset</button>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-title" style="margin-bottom:16px;">🎨 Theme</div>
+                            <div style="display:flex;gap:12px;">
+                                <button class="btn" :class="theme==='light'?'btn-primary':'btn-secondary'"
+                                    @click="setTheme('light')">☀️ Light</button>
+                                <button class="btn" :class="theme==='dark'?'btn-primary':'btn-secondary'"
+                                    @click="setTheme('dark')">🌙 Dark</button>
+                            </div>
+                        </div>
+                        <div class="card" style="margin-top:14px;">
+                            <div class="card-title" style="margin-bottom:16px;">📊 Data Summary</div>
+                            <div style="font-size:13px;color:var(--text2);line-height:2;">
+                                Products: <strong style="color:var(--text)">{{inventory.length}}</strong> &nbsp;|&nbsp;
+                                Invoices: <strong style="color:var(--text)">{{invoices.length}}</strong> &nbsp;|&nbsp;
+                                Total Billed: <strong
+                                    style="color:var(--accent)">{{company.currency}}{{totalBilled.toLocaleString('en-IN')}}</strong>
+                            </div>
+                        </div>
+                    </div>
+                </transition>
+
+            </div><!-- /page-content -->
+        </div><!-- /main-app -->
+
+        <!-- ═══════════ MODALS ═══════════ -->
+
+        <!-- ADD/EDIT PRODUCT MODAL -->
+        <transition name="fade">
+            <div class="modal-overlay" v-if="modals.product" @click.self="modals.product=false">
+                <div class="modal">
+                    <div class="modal-header">
+                        <div class="modal-title">{{editingProduct?'✏️ Edit':'➕ Add'}} Product</div>
+                        <div class="modal-close" @click="modals.product=false">✕</div>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label class="form-label">Product Name *</label>
+                            <input class="form-input" v-model="pform.name" placeholder="e.g. Cement Bag 50kg" />
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">SKU / Code <span class="opt">(optional)</span></label>
+                                <input class="form-input" v-model="pform.sku" placeholder="PRD-001" />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Category <span class="opt">(optional)</span></label>
+                                <input class="form-input" v-model="pform.category"
+                                    placeholder="e.g. Building Materials" />
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Selling Rate ({{company.currency}}) *</label>
+                                <input class="form-input" type="number" v-model.number="pform.rate" placeholder="0.00"
+                                    min="0" />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Unit</label>
+                                <select class="form-input" v-model="pform.unit">
+                                    <option>Nos</option>
+                                    <option>Kg</option>
+                                    <option>g</option>
+                                    <option>L</option>
+                                    <option>ml</option>
+                                    <option>m</option>
+                                    <option>cm</option>
+                                    <option>Box</option>
+                                    <option>Pack</option>
+                                    <option>Bag</option>
+                                    <option>Roll</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Opening Stock *</label>
+                                <input class="form-input" type="number" v-model.number="pform.qty" placeholder="0"
+                                    min="0" />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Low Stock Alert At</label>
+                                <input class="form-input" type="number" v-model.number="pform.lowAt" placeholder="5"
+                                    min="0" />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">GST % <span class="opt">(optional)</span></label>
+                            <select class="form-input" v-model.number="pform.gst">
+                                <option :value="0">0%</option>
+                                <option :value="5">5%</option>
+                                <option :value="12">12%</option>
+                                <option :value="18">18%</option>
+                                <option :value="28">28%</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" @click="modals.product=false">Cancel</button>
+                        <button class="btn btn-primary" @click="saveProduct" :disabled="formLoading">
+                            <span class="spinner" v-if="formLoading"></span>
+                            {{formLoading?'Saving...':'💾 Save Product'}}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </transition>
+
+        <!-- ADJUST STOCK MODAL -->
+        <transition name="fade">
+            <div class="modal-overlay" v-if="modals.stock" @click.self="modals.stock=false">
+                <div class="modal">
+                    <div class="modal-header">
+                        <div class="modal-title">📊 Adjust Stock</div>
+                        <div class="modal-close" @click="modals.stock=false">✕</div>
+                    </div>
+                    <div class="modal-body" v-if="adjustingProduct">
+                        <div style="background:var(--surface2);border-radius:10px;padding:14px;margin-bottom:20px;">
+                            <div style="font-size:15px;font-weight:700;">{{adjustingProduct.name}}</div>
+                            <div style="font-size:13px;color:var(--text2);margin-top:4px;">Current Stock: <strong
+                                    style="color:var(--text);font-family:var(--mono)">{{adjustingProduct.qty}}
+                                    {{adjustingProduct.unit}}</strong></div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Adjustment Type</label>
+                            <div style="display:flex;gap:10px;">
+                                <button class="btn" :class="stockAdj.type==='add'?'btn-success':'btn-secondary'"
+                                    @click="stockAdj.type='add'">➕ Add Stock</button>
+                                <button class="btn" :class="stockAdj.type==='remove'?'btn-danger':'btn-secondary'"
+                                    @click="stockAdj.type='remove'">➖ Remove Stock</button>
+                                <button class="btn" :class="stockAdj.type==='set'?'btn-primary':'btn-secondary'"
+                                    @click="stockAdj.type='set'">🔄 Set Exact</button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Quantity</label>
+                            <input class="form-input" type="number" v-model.number="stockAdj.qty" min="0"
+                                placeholder="0" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Reason <span class="opt">(optional)</span></label>
+                            <input class="form-input" v-model="stockAdj.reason"
+                                placeholder="e.g. New purchase, Returns..." />
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" @click="modals.stock=false">Cancel</button>
+                        <button class="btn btn-primary" @click="saveStockAdjust">✅ Apply Adjustment</button>
+                    </div>
+                </div>
+            </div>
+        </transition>
+
+        <!-- STOCK PICKER MODAL -->
+        <transition name="fade">
+            <div class="modal-overlay" v-if="modals.stockPicker" @click.self="modals.stockPicker=false">
+                <div class="modal modal-lg">
+                    <div class="modal-header">
+                        <div class="modal-title">📦 Pick from Stock</div>
+                        <div class="modal-close" @click="modals.stockPicker=false">✕</div>
+                    </div>
+                    <div class="modal-body">
+                        <div class="search-bar" style="margin-bottom:14px;">
+                            <span class="search-icon">🔍</span>
+                            <input class="form-input" v-model="pickerSearch" placeholder="Search products..."
+                                style="padding-left:36px;" />
+                        </div>
+                        <div class="table-wrap">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Product</th>
+                                        <th>Rate</th>
+                                        <th>Stock</th>
+                                        <th>Qty to Bill</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="p in filteredPicker" :key="p.id">
+                                        <td><strong>{{p.name}}</strong>
+                                            <div style="font-size:11px;color:var(--text2)">{{p.unit}}</div>
+                                        </td>
+                                        <td><span
+                                                style="font-family:var(--mono)">{{company.currency}}{{Number(p.rate).toFixed(2)}}</span>
+                                        </td>
+                                        <td><span class="badge" :class="stockBadge(p)">{{p.qty}}</span></td>
+                                        <td>
+                                            <div class="qty-control">
+                                                <button @click="decPickerQty(p)">−</button>
+                                                <input type="number" v-model.number="pickerQtys[p.id]" min="0"
+                                                    :max="p.qty" />
+                                                <button @click="incPickerQty(p)">+</button>
+                                            </div>
+                                        </td>
+                                        <td><button class="btn btn-primary btn-xs" @click="addFromPicker(p)"
+                                                :disabled="!pickerQtys[p.id]||pickerQtys[p.id]<1">Add</button></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" @click="modals.stockPicker=false">Close</button>
+                    </div>
+                </div>
+            </div>
+        </transition>
+
+        <!-- INVOICE PREVIEW MODAL -->
+        <transition name="fade">
+            <div class="modal-overlay" v-if="modals.invPreview" @click.self="modals.invPreview=false">
+                <div class="modal modal-xl">
+                    <div class="modal-header no-print">
+                        <div class="modal-title">🧾 Invoice Preview</div>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <div class="modal-close" @click="modals.invPreview=false">✕</div>
+                        </div>
+                    </div>
+                    <div class="modal-body" style="padding:16px;">
+                        <!-- Controls -->
+                        <div class="no-print"
+                            style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:16px;align-items:flex-start;">
+                            <!-- Template -->
+                            <div>
+                                <div
+                                    style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:8px;">
+                                    Template</div>
+                                <div style="display:flex;gap:8px;">
+                                    <button class="btn btn-sm" :class="invTemplate===1?'btn-primary':'btn-secondary'"
+                                        @click="invTemplate=1">🌟 Classic</button>
+                                    <button class="btn btn-sm" :class="invTemplate===2?'btn-primary':'btn-secondary'"
+                                        @click="invTemplate=2">🌙 Dark Elegant</button>
+                                </div>
+                            </div>
+                            <!-- Paper Size -->
+                            <div>
+                                <div
+                                    style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:8px;">
+                                    Paper Size</div>
+                                <div style="display:flex;flex-wrap:wrap;gap:6px;">
+                                    <button v-for="s in paperSizes" :key="s.id" class="btn btn-xs"
+                                        :class="paperSize===s.id?'btn-primary':'btn-secondary'"
+                                        @click="setPaperSize(s.id)">{{s.label}}</button>
+                                    <button class="btn btn-xs"
+                                        :class="paperSize==='custom'?'btn-primary':'btn-secondary'"
+                                        @click="setPaperSize('custom')">✏️ Custom</button>
+                                </div>
+                                <div v-if="paperSize==='custom'"
+                                    style="display:flex;gap:8px;margin-top:8px;align-items:center;">
+                                    <input class="form-input" type="number" v-model.number="customW"
+                                        placeholder="Width mm" style="width:110px;padding:7px 10px;font-size:12px;" />
+                                    <span style="color:var(--text2);font-size:13px;">×</span>
+                                    <input class="form-input" type="number" v-model.number="customH"
+                                        placeholder="Height mm" style="width:110px;padding:7px 10px;font-size:12px;" />
+                                    <span style="color:var(--text2);font-size:12px;">mm</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Invoice render -->
+                        <div class="invoice-preview-wrap">
+                            <div id="invoice-render">
+                                <!-- TEMPLATE 1 -->
+                                <div class="inv-t1" v-if="invTemplate===1">
+                                    <div class="inv-header">
+                                        <div>
+                                            <div class="inv-brand">{{company.name}}</div>
+                                            <div class="inv-tagline" v-if="company.address">{{company.address}}</div>
+                                            <div class="inv-tagline" v-if="company.phone">📞 {{company.phone}}</div>
+                                            <div class="inv-tagline" v-if="company.email">📧 {{company.email}}</div>
+                                            <div class="inv-tagline" v-if="company.gst">GST: {{company.gst}}</div>
+                                        </div>
+                                        <div class="inv-meta">
+                                            <strong>INVOICE</strong>
+                                            #{{previewInv.number}}<br />
+                                            Date: {{formatDate(previewInv.date)}}<br />
+                                        </div>
+                                    </div>
+                                    <div class="inv-section" v-if="previewInv.customer||previewInv.customerAddress">
+                                        <div class="inv-from">
+                                            <div class="inv-label">From</div>
+                                            <strong>{{company.name}}</strong>
+                                            {{company.address}}<br />
+                                            {{company.phone}}
+                                        </div>
+                                        <div class="inv-to">
+                                            <div class="inv-label">Bill To</div>
+                                            <strong>{{previewInv.customer||'Customer'}}</strong>
+                                            {{previewInv.customerAddress}}<br />
+                                            {{previewInv.customerPhone}}
+                                        </div>
+                                    </div>
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th style="width:40%">Item</th>
+                                                <th style="text-align:center">Qty</th>
+                                                <th style="text-align:right">Rate</th>
+                                                <th style="text-align:right">Disc%</th>
+                                                <th style="text-align:right">GST%</th>
+                                                <th style="text-align:right">Amount</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr v-for="(item,i) in previewInv.items" :key="i">
+                                                <td>{{item.name}}</td>
+                                                <td style="text-align:center">{{item.qty}}</td>
+                                                <td style="text-align:right">
+                                                    {{company.currency}}{{Number(item.rate).toFixed(2)}}</td>
+                                                <td style="text-align:right">{{item.disc||0}}%</td>
+                                                <td style="text-align:right">{{item.gst||0}}%</td>
+                                                <td style="text-align:right;font-weight:700">
+                                                    {{company.currency}}{{calcItemTotal(item).toFixed(2)}}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                    <div class="inv-totals">
+                                        <div class="totals-box">
+                                            <div class="totals-row">
+                                                <span>Subtotal</span><span>{{company.currency}}{{previewSubtotal.toFixed(2)}}</span>
+                                            </div>
+                                            <div class="totals-row">
+                                                <span>Discount</span><span>-{{company.currency}}{{previewDiscount.toFixed(2)}}</span>
+                                            </div>
+                                            <div class="totals-row">
+                                                <span>GST</span><span>+{{company.currency}}{{previewGst.toFixed(2)}}</span>
+                                            </div>
+                                            <div class="totals-row grand">
+                                                <span>Total</span><span>{{company.currency}}{{previewTotal.toFixed(2)}}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="inv-notes" v-if="previewInv.notes">📝 {{previewInv.notes}}</div>
+                                    <div class="inv-footer">Thank you for your business! · {{company.name}} ·
+                                        {{company.phone}}</div>
+                                </div>
+
+                                <!-- TEMPLATE 2 -->
+                                <div class="inv-t2" v-if="invTemplate===2">
+                                    <div class="inv-header">
+                                        <div>
+                                            <div class="inv-brand">{{company.name}}</div>
+                                            <div class="inv-tagline" v-if="company.address">{{company.address}}</div>
+                                            <div class="inv-tagline" v-if="company.phone">📞 {{company.phone}}</div>
+                                            <div class="inv-tagline" v-if="company.email">📧 {{company.email}}</div>
+                                            <div class="inv-tagline" v-if="company.gst">GST: {{company.gst}}</div>
+                                        </div>
+                                        <div class="inv-meta">
+                                            <strong>INVOICE</strong>
+                                            #{{previewInv.number}}<br />
+                                            {{formatDate(previewInv.date)}}
+                                        </div>
+                                    </div>
+                                    <div class="inv-divider"></div>
+                                    <div class="inv-section" v-if="previewInv.customer||previewInv.customerAddress">
+                                        <div class="inv-from">
+                                            <div class="inv-label">From</div>
+                                            <strong>{{company.name}}</strong>
+                                            {{company.address}}<br />{{company.phone}}
+                                        </div>
+                                        <div class="inv-to">
+                                            <div class="inv-label">Bill To</div>
+                                            <strong>{{previewInv.customer||'Customer'}}</strong>
+                                            {{previewInv.customerAddress}}<br />{{previewInv.customerPhone}}
+                                        </div>
+                                    </div>
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th style="width:40%">Item</th>
+                                                <th style="text-align:center">Qty</th>
+                                                <th style="text-align:right">Rate</th>
+                                                <th style="text-align:right">Disc%</th>
+                                                <th style="text-align:right">GST%</th>
+                                                <th style="text-align:right">Amount</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr v-for="(item,i) in previewInv.items" :key="i">
+                                                <td>{{item.name}}</td>
+                                                <td style="text-align:center">{{item.qty}}</td>
+                                                <td style="text-align:right">
+                                                    {{company.currency}}{{Number(item.rate).toFixed(2)}}</td>
+                                                <td style="text-align:right">{{item.disc||0}}%</td>
+                                                <td style="text-align:right">{{item.gst||0}}%</td>
+                                                <td style="text-align:right;font-weight:700">
+                                                    {{company.currency}}{{calcItemTotal(item).toFixed(2)}}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                    <div class="inv-totals">
+                                        <div class="totals-box">
+                                            <div class="totals-row">
+                                                <span>Subtotal</span><span>{{company.currency}}{{previewSubtotal.toFixed(2)}}</span>
+                                            </div>
+                                            <div class="totals-row">
+                                                <span>Discount</span><span>-{{company.currency}}{{previewDiscount.toFixed(2)}}</span>
+                                            </div>
+                                            <div class="totals-row">
+                                                <span>GST</span><span>+{{company.currency}}{{previewGst.toFixed(2)}}</span>
+                                            </div>
+                                            <div class="totals-row grand">
+                                                <span>TOTAL</span><span>{{company.currency}}{{previewTotal.toFixed(2)}}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="inv-notes" v-if="previewInv.notes">📝 {{previewInv.notes}}</div>
+                                    <div class="inv-footer">Thank you for your business · {{company.name}} ·
+                                        {{company.phone}}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer no-print">
+                        <button class="btn btn-secondary" @click="modals.invPreview=false">Close</button>
+                        <button class="btn btn-success" @click="saveAndDownload" :disabled="pdfLoading">
+                            <span class="spinner" v-if="pdfLoading"></span>
+                            <span v-else>📄</span>
+                            {{pdfLoading?'Generating PDF...':'Download PDF'}}
+                        </button>
+                        <button class="btn btn-primary" @click="saveInvoice" v-if="!previewInv.saved">
+                            💾 Save Invoice
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </transition>
+
+        <!-- EDIT COMPANY MODAL -->
+        <transition name="fade">
+            <div class="modal-overlay" v-if="modals.editCompany" @click.self="modals.editCompany=false">
+                <div class="modal">
+                    <div class="modal-header">
+                        <div class="modal-title">✏️ Edit Company</div>
+                        <div class="modal-close" @click="modals.editCompany=false">✕</div>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label class="form-label">Shop Name *</label>
+                            <input class="form-input" v-model="eform.name" placeholder="Business Name" />
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Phone *</label>
+                                <input class="form-input" v-model="eform.phone" placeholder="+91 ..." />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Email <span class="opt">(optional)</span></label>
+                                <input class="form-input" v-model="eform.email" type="email" />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Address *</label>
+                            <textarea class="form-input" v-model="eform.address" rows="2"></textarea>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">GST <span class="opt">(optional)</span></label>
+                                <input class="form-input" v-model="eform.gst" />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Currency</label>
+                                <select class="form-input" v-model="eform.currency">
+                                    <option value="₹">₹ INR</option>
+                                    <option value="$">$ USD</option>
+                                    <option value="€">€ EUR</option>
+                                    <option value="£">£ GBP</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" @click="modals.editCompany=false">Cancel</button>
+                        <button class="btn btn-primary" @click="saveEditCompany">💾 Save Changes</button>
+                    </div>
+                </div>
+            </div>
+        </transition>
+
+        <!-- CONFIRM MODAL -->
+        <transition name="fade">
+            <div class="modal-overlay" v-if="modals.confirm" @click.self="modals.confirm=false">
+                <div class="modal" style="max-width:400px;">
+                    <div class="modal-header">
+                        <div class="modal-title">{{confirmData.title}}</div>
+                        <div class="modal-close" @click="modals.confirm=false">✕</div>
+                    </div>
+                    <div class="modal-body">
+                        <p style="font-size:14px;color:var(--text2);line-height:1.6;">{{confirmData.msg}}</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" @click="modals.confirm=false">Cancel</button>
+                        <button class="btn btn-danger"
+                            @click="confirmData.cb();modals.confirm=false">{{confirmData.action||'Confirm'}}</button>
+                    </div>
+                </div>
+            </div>
+        </transition>
+
+    </div>
+
+    <script src="js/script.js"></script>
+
+</body>
+
+</html>
