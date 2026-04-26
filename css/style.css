@@ -224,6 +224,68 @@ a {
     color: rgba(255,255,255,.25);
 }
 
+/* ── TAMIL LANGUAGE OVERRIDES ── */
+[data-lang="ta"] {
+    --tamil-font: 'Noto Sans Tamil', sans-serif;
+}
+
+[data-lang="ta"] .setup-brand-headline {
+    font-family: var(--tamil-font);
+    font-size: 26px;
+    letter-spacing: 0;
+    line-height: 1.4;
+}
+
+[data-lang="ta"] .setup-brand-desc {
+    font-family: var(--tamil-font);
+    font-size: 13px;
+    line-height: 1.8;
+}
+
+[data-lang="ta"] .setup-feature-item {
+    font-family: var(--tamil-font);
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+[data-lang="ta"] .setup-title {
+    font-family: var(--tamil-font);
+    font-size: 20px;
+    letter-spacing: 0;
+    font-weight: 700;
+}
+
+[data-lang="ta"] .setup-sub {
+    font-family: var(--tamil-font);
+    font-size: 12.5px;
+    line-height: 1.8;
+}
+
+[data-lang="ta"] .form-label {
+    font-family: var(--tamil-font);
+    font-size: 11px;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+[data-lang="ta"] .form-input {
+    font-family: var(--tamil-font);
+    font-size: 13px;
+}
+
+[data-lang="ta"] .form-input::placeholder {
+    font-family: var(--tamil-font);
+    font-size: 13px;
+}
+
+[data-lang="ta"] .btn-primary {
+    font-family: var(--tamil-font);
+    font-size: 14px;
+    letter-spacing: 0;
+}
+
+
+
 /* DECORATIVE GRID */
 .setup-brand-grid {
     position: absolute;
@@ -278,16 +340,48 @@ a {
     }
 }
 
+.setup-card-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 32px;
+}
+
+.lang-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: 20px;
+    border: 1.5px solid var(--border);
+    background: var(--surface2);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color .2s, background .2s, color .2s;
+    white-space: nowrap;
+}
+
+.lang-toggle-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--surface);
+}
+
 .setup-logo {
     display: flex;
     align-items: center;
     gap: 12px;
-    margin-bottom: 32px;
 }
 
 @media(min-width: 900px) {
     .setup-logo {
         display: none;
+    }
+    .setup-card-topbar {
+        justify-content: flex-end;
     }
 }
 

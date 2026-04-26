@@ -59,9 +59,56 @@ new Vue({
             pickerQtys: {},
             // Invoice counter
             invCounter: 1,
+            // Language
+            lang: 'ta',
+            translations: {
+                en: {
+                    createCompanyTitle: 'Create Your Company',
+                    createCompanySub: 'Set up once. Invoice smarter. Only one company per device.',
+                    shopName: 'Shop / Business Name',
+                    phone: 'Phone Number',
+                    email: 'Email',
+                    optional: '(optional)',
+                    address: 'Address',
+                    gst: 'GST Number',
+                    currency: 'Currency Symbol',
+                    createBtn: 'Create Company & Get Started',
+                    creating: 'Creating...',
+                    headline1: 'Invoice smarter,',
+                    headline2: 'grow faster.',
+                    brandDesc: 'The all-in-one invoicing and inventory platform built for modern businesses. Professional invoices in seconds.',
+                    feature1: 'Generate professional PDF invoices instantly',
+                    feature2: 'Real-time inventory tracking with low-stock alerts',
+                    feature3: 'Dashboard analytics and billing history',
+                    feature4: '100% offline — your data stays on your device',
+                    langBtn: 'English',
+                },
+                ta: {
+                    createCompanyTitle: 'உங்கள் நிறுவனத்தை உருவாக்கவும்',
+                    createCompanySub: 'ஒரு முறை அமைக்கவும். புத்திசாலித்தனமாக விலைப்பட்டியல் இடவும். சாதனத்திற்கு ஒரு நிறுவனம் மட்டுமே.',
+                    shopName: 'கடை / வணிக பெயர்',
+                    phone: 'தொலைபேசி எண்',
+                    email: 'மின்னஞ்சல்',
+                    optional: '(விருப்பத்தேர்வு)',
+                    address: 'முகவரி',
+                    gst: 'ஜிஎஸ்டி எண்',
+                    currency: 'நாணய சின்னம்',
+                    createBtn: 'நிறுவனத்தை உருவாக்கி தொடங்குங்கள்',
+                    creating: 'உருவாக்குகிறது...',
+                    headline1: 'புத்திசாலித்தனமாக விலைப்பட்டியல்,',
+                    headline2: 'வேகமாக வளருங்கள்.',
+                    brandDesc: 'நவீன வணிகங்களுக்காக கட்டப்பட்ட அனைத்து-இன்-ஒன் விலைப்பட்டியல் மற்றும் சரக்கு தளம். நொடியில் தொழில்முறை விலைப்பட்டியல்.',
+                    feature1: 'உடனடியாக தொழில்முறை PDF விலைப்பட்டியல் உருவாக்கவும்',
+                    feature2: 'குறைந்த இருப்பு எச்சரிக்கைகளுடன் நிகழ்நேர சரக்கு கண்காணிப்பு',
+                    feature3: 'டாஷ்போர்டு பகுப்பாய்வு மற்றும் பில்லிங் வரலாறு',
+                    feature4: '100% ஆஃப்லைன் — உங்கள் தரவு உங்கள் சாதனத்தில் உள்ளது',
+                    langBtn: 'தமிழ்',
+                }
+            },
         };
     },
     computed: {
+        t() { return this.translations[this.lang]; },
         // Inventory filters
         filteredInventory() {
             const q = this.invSearch.toLowerCase();

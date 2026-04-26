@@ -8,7 +8,7 @@
     <script src="https://cdn.jsdelivr.net/npm/vue@2.7.14/dist/vue.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <link
-        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&family=Noto+Sans+Tamil:wght@400;500;600;700&display=swap"
         rel="stylesheet" />
     <link rel="stylesheet" href="css/style.css">
 </head>
@@ -33,7 +33,7 @@
         </div>
 
         <!-- ═══════════ SETUP SCREEN ═══════════ -->
-        <div class="setup-screen" v-if="!company" :data-theme="theme">
+        <div class="setup-screen" v-if="!company" :data-theme="theme" :data-lang="lang">
 
             <!-- LEFT BRAND PANEL -->
             <div class="setup-brand-panel">
@@ -44,27 +44,27 @@
                         <div class="brand-name">Star <em>Invoice</em></div>
                     </div>
                     <div class="setup-brand-headline">
-                        Invoice smarter,<br><span>grow faster.</span>
+                        {{t.headline1}}<br><span>{{t.headline2}}</span>
                     </div>
                     <div class="setup-brand-desc">
-                        The all-in-one invoicing and inventory platform built for modern businesses. Professional invoices in seconds.
+                        {{t.brandDesc}}
                     </div>
                     <div class="setup-brand-features">
                         <div class="setup-feature-item">
                             <div class="setup-feature-icon">🧾</div>
-                            <span>Generate professional PDF invoices instantly</span>
+                            <span>{{t.feature1}}</span>
                         </div>
                         <div class="setup-feature-item">
                             <div class="setup-feature-icon">📦</div>
-                            <span>Real-time inventory tracking with low-stock alerts</span>
+                            <span>{{t.feature2}}</span>
                         </div>
                         <div class="setup-feature-item">
                             <div class="setup-feature-icon">📊</div>
-                            <span>Dashboard analytics and billing history</span>
+                            <span>{{t.feature3}}</span>
                         </div>
                         <div class="setup-feature-item">
                             <div class="setup-feature-icon">🔒</div>
-                            <span>100% offline — your data stays on your device</span>
+                            <span>{{t.feature4}}</span>
                         </div>
                     </div>
                 </div>
@@ -74,40 +74,45 @@
             <!-- RIGHT FORM PANEL -->
             <div class="setup-form-panel">
             <div class="setup-card">
-                <div class="setup-logo">
-                    <div class="logo-icon">★</div>
-                    <span>Star <em>Invoice</em></span>
+                <div class="setup-card-topbar">
+                    <div class="setup-logo">
+                        <div class="logo-icon">★</div>
+                        <span>Star <em>Invoice</em></span>
+                    </div>
+                    <button class="lang-toggle-btn" @click="lang = lang === 'ta' ? 'en' : 'ta'">
+                        {{ lang === 'ta' ? '🇬🇧 English' : '🇮🇳 தமிழ்' }}
+                    </button>
                 </div>
-                <div class="setup-title">Create Your Company</div>
-                <div class="setup-sub">Set up once. Invoice smarter. Only one company per device.</div>
+                <div class="setup-title">{{t.createCompanyTitle}}</div>
+                <div class="setup-sub">{{t.createCompanySub}}</div>
 
                 <div class="form-group">
-                    <label class="form-label">Shop / Business Name <span style="color:var(--danger)">*</span></label>
-                    <input class="form-input" v-model="form.name" placeholder="e.g. Sri Murugan Traders"
+                    <label class="form-label">{{t.shopName}} <span style="color:var(--danger)">*</span></label>
+                    <input class="form-input" v-model="form.name" :placeholder="lang==='ta' ? 'எ.கா. ஸ்ரீ முருகன் டிரேடர்ஸ்' : 'e.g. Sri Murugan Traders'"
                         maxlength="80" />
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label class="form-label">Phone Number <span style="color:var(--danger)">*</span></label>
+                        <label class="form-label">{{t.phone}} <span style="color:var(--danger)">*</span></label>
                         <input class="form-input" v-model="form.phone" placeholder="+91 98765 43210" maxlength="20" />
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Email <span class="opt">(optional)</span></label>
+                        <label class="form-label">{{t.email}} <span class="opt">{{t.optional}}</span></label>
                         <input class="form-input" v-model="form.email" placeholder="shop@email.com" type="email" />
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Address <span style="color:var(--danger)">*</span></label>
-                    <textarea class="form-input" v-model="form.address" placeholder="Street, City, State - PIN"
+                    <label class="form-label">{{t.address}} <span style="color:var(--danger)">*</span></label>
+                    <textarea class="form-input" v-model="form.address" :placeholder="lang==='ta' ? 'தெரு, நகரம், மாநிலம் - பின்' : 'Street, City, State - PIN'"
                         rows="2"></textarea>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label class="form-label">GST Number <span class="opt">(optional)</span></label>
+                        <label class="form-label">{{t.gst}} <span class="opt">{{t.optional}}</span></label>
                         <input class="form-input" v-model="form.gst" placeholder="22AAAAA0000A1Z5" maxlength="15" />
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Currency Symbol</label>
+                        <label class="form-label">{{t.currency}}</label>
                         <select class="form-input" v-model="form.currency">
                             <option value="₹">₹ INR</option>
                             <option value="$">$ USD</option>
@@ -120,7 +125,7 @@
                 <button class="btn btn-primary btn-full" @click="createCompany" :disabled="formLoading">
                     <span class="spinner" v-if="formLoading"></span>
                     <span v-else>★</span>
-                    {{formLoading ? 'Creating...' : 'Create Company & Get Started'}}
+                    {{formLoading ? t.creating : t.createBtn}}
                 </button>
             </div><!-- /setup-card -->
             </div><!-- /setup-form-panel -->
