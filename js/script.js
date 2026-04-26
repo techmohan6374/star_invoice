@@ -4,7 +4,7 @@ new Vue({
         const today = new Date().toISOString().split('T')[0];
         return {
             // Theme
-            theme: 'dark',
+            theme: 'light',
             // Company
             company: null,
             form: { name: '', phone: '', email: '', address: '', gst: '', currency: '₹', logo: '' },
