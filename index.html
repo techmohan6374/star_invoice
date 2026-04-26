@@ -161,9 +161,13 @@
                     <div class="shop-badge">{{company.name}}</div>
                 </div>
                 <div class="topbar-right">
-                    <button class="theme-toggle" @click="toggleTheme" :title="theme==='dark'?'Light Mode':'Dark Mode'">
-                        {{theme==='dark'?'☀️':'🌙'}}
-                    </button>
+                    <div class="theme-switch-wrap" @click="toggleTheme" :title="theme==='dark'?'Light Mode':'Dark Mode'">
+                        <span class="theme-switch-icon">🌙</span>
+                        <div class="theme-switch" :class="{active: theme==='light'}">
+                            <div class="theme-switch-thumb"></div>
+                        </div>
+                        <span class="theme-switch-icon">☀️</span>
+                    </div>
                     <button class="btn btn-topbar-reset btn-sm no-print" @click="confirmDeleteCompany">🗑 Reset</button>
                 </div>
             </div>
